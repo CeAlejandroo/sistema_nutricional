@@ -22,22 +22,22 @@ if ($result->num_rows === 1) {
         // [HECHO] Credenciales válidas; guardar datos en sesión
         $_SESSION['id'] = $usuario['id'];
         $_SESSION['nombre'] = $usuario['nombre'];
-        $_SESSION['rol'] = $usuario['rol'];
+        $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
 
-        // [REGLA] Redirigir según el rol del usuario
-        switch ($usuario['rol']) {
-            case 'admin':
+        // [REGLA] Redirigir según el tipo de usuario
+        switch ($usuario['tipo_usuario']) {
+            case 'administrador':
                 header('Location: vistas/administrador/administrador.php');
                 break;
             case 'nutriologo':
-                header("Location: vistas/nutriologo/clientes.php"); // [PENDIENTE] Puedes cambiarlo a `nutriologo.php`
+                header("Location: vistas/nutriologo/clientes.php");
                 break;
             case 'cliente':
-                header("Location: vistas/cliente/clientes.php"); // [PENDIENTE] Puedes cambiarlo a `cliente.php`
+                header("Location: vistas/cliente/clientes.php");
                 break;
             default:
-                // [REGLA] Rol no reconocido
-                $_SESSION['error'] = "Rol no reconocido.";
+                // [REGLA] Tipo de usuario no reconocido
+                $_SESSION['error'] = "Tipo de usuario no reconocido.";
                 header("Location: login.php");
         }
         exit();

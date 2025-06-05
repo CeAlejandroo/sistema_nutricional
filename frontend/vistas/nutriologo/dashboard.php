@@ -15,7 +15,7 @@ $stats = [
     'total_clientes' => 0,
     'citas_hoy' => 0,
     'planes_activos' => 0,
-    'progreso_promedio' => 0
+    'progreso_promedio' => 78
 ];
 
 // Consultar total de clientes
@@ -68,9 +68,9 @@ if ($result) {
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>Nutriologo</h1>
+                <h1>NutriManager</h1>
                 <nav class="nav">
-                    <a href="dashboard.php" class="nav-link active">Inicio</a>
+                    <a href="dashboard.php" class="nav-link active">Dashboard</a>
                     <a href="clientes.php" class="nav-link">Clientes</a>
                     <a href="citas.php" class="nav-link">Citas</a>
                     <a href="planes.php" class="nav-link">Planes</a>
@@ -126,7 +126,7 @@ if ($result) {
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <div class="stat-content">
-                        <h3>78%</h3>
+                        <h3><?php echo $stats['progreso_promedio']; ?>%</h3>
                         <p>Progreso Promedio</p>
                         <span class="stat-change">+5% vs mes anterior</span>
                     </div>
