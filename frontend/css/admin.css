@@ -1,0 +1,58 @@
+    .dashboard {
+        max-width: 900px;
+        margin: 40px auto;
+        background: #fff;
+        padding: 30px 40px;
+        border-radius: 10px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+
+    .dashboard h2 {
+        font-size: 24px;
+        margin-bottom: 10px;
+        color: #2c3e50;
+    }
+
+    .dashboard p {
+        font-size: 18px;
+        margin-bottom: 30px;
+        color: #555;
+    }
+
+    .admin-actions {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 30px;
+    }
+
+    .admin-actions .action {
+        text-align: center;
+    }
+
+    .admin-actions .circle {
+        width: 100px;
+        height: 100px;
+        background-color: #aee8ff;
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: #000;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform 0.2s ease;
+        cursor: pointer;
+    }
+
+    .admin-actions .circle i {
+        font-size: 22px;
+        margin-bottom: 6px;
+    }
+
+    .admin-actions .circle:hover {
+        transform: scale(1.05);
+    }
