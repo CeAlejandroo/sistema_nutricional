@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = "Por favor completa todos los campos.";
     } else {
         // Consulta: Buscar usuario por correo
-        $stmt = $conn->prepare("SELECT id, nombre, contraseña, rol FROM usuarios WHERE correo = ?");
+        $stmt = $conn->prepare("SELECT id, nombre, password, rol FROM usuarios WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
@@ -43,7 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->fetch();
 
             // Verificar que la contraseña coincida
-            if (password_verify($password, $hash)) {
+            // TEMPORAL: para probar si funciona con texto plano
+            if ($password === $hash) {
                 // Usuario autenticado correctamente
                 $_SESSION['usuario'] = [
                     'id' => $id,
@@ -51,7 +52,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'email' => $email,
                     'rol' => $rol
                 ];
-
                 // Redirigir según el rol del usuario
                 switch ($rol) {
                     case 'admin':
@@ -108,7 +108,7 @@ $registrado = isset($_GET['registrado']);
 
             <button type="submit">Iniciar sesión</button>
         </form>
-        <a href="includes/registro.php">Registrarse</a>
+        <!-- <a href="includes/registro.php">Registrarse</a> -->
     </div>
 </body>
 </html>

@@ -30,10 +30,10 @@ if ($result->num_rows === 1) {
                 header('Location: vistas/administrador/administrador.php');
                 break;
             case 'nutriologo':
-                header("Location: vistas/nutriologo/clientes.php"); // [PENDIENTE] Puedes cambiarlo a `nutriologo.php`
+                header("Location: vistas/nutriologo/clientes.php");
                 break;
             case 'cliente':
-                header("Location: vistas/cliente/clientes.php"); // [PENDIENTE] Puedes cambiarlo a `cliente.php`
+                header("Location: vistas/cliente/clientes.php");
                 break;
             default:
                 // [REGLA] Rol no reconocido
@@ -54,4 +54,3 @@ if ($result->num_rows === 1) {
     exit();
 }
 ?>
-<?php
