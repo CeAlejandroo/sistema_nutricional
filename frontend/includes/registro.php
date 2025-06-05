@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
     $edad = (int)$_POST['edad'];
     $sexo = $_POST['sexo'];
-    $tipo_usuario = 'cliente'; // Todo usuario registrado por esta vista será cliente por defecto
+    $rol = 'cliente'; // Hecho: Todo usuario registrado por esta vista será cliente por defecto
 
     // Regla: Todos los campos deben estar llenos para proceder con el registro
     if (empty($nombre) || empty($correo) || empty($password) || empty($edad) || empty($sexo)) {
@@ -32,8 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hash = password_hash($password, PASSWORD_DEFAULT);
 
             // Hecho: Si todo es válido, se registra al nuevo usuario en la base de datos
-            $stmt = $conn->prepare("INSERT INTO usuarios (nombre, correo, contraseña, edad, sexo, tipo_usuario) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("sssiss", $nombre, $correo, $hash, $edad, $sexo, $tipo_usuario);
+            $stmt = $conn->prepare("INSERT INTO usuarios (nombre, correo, contraseña, edad, sexo, rol) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssiss", $nombre, $correo, $hash, $edad, $sexo, $rol);
 
             // Regla: Si el registro es exitoso, se redirige al login
             if ($stmt->execute()) {

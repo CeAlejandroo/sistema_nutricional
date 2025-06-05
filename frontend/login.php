@@ -3,9 +3,9 @@ session_start();
 
 // Verificamos si ya hay una sesión iniciada
 if (isset($_SESSION['usuario'])) {
-    // Redirigir al dashboard correspondiente según el tipo de usuario
-    switch ($_SESSION['usuario']['tipo_usuario']) {
-        case 'administrador':
+    // Redirigir al dashboard correspondiente según el rol
+    switch ($_SESSION['usuario']['rol']) {
+        case 'admin':
             header('Location: vistas/administrador/administrador.php');
             break;
         case 'nutriologo':
@@ -32,14 +32,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = "Por favor completa todos los campos.";
     } else {
         // Consulta: Buscar usuario por correo
-        $stmt = $conn->prepare("SELECT id, nombre, contraseña, tipo_usuario FROM usuarios WHERE correo = ?");
+        $stmt = $conn->prepare("SELECT id, nombre, contraseña, rol FROM usuarios WHERE correo = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $stmt->store_result();
 
         // Si encontramos una coincidencia de usuario
         if ($stmt->num_rows === 1) {
-            $stmt->bind_result($id, $nombre, $hash, $tipo_usuario);
+            $stmt->bind_result($id, $nombre, $hash, $rol);
             $stmt->fetch();
 
             // Verificar que la contraseña coincida
@@ -49,12 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'id' => $id,
                     'nombre' => $nombre,
                     'email' => $email,
-                    'tipo_usuario' => $tipo_usuario
+                    'rol' => $rol
                 ];
 
-                // Redirigir según el tipo de usuario
-                switch ($tipo_usuario) {
-                    case 'administrador':
+                // Redirigir según el rol del usuario
+                switch ($rol) {
+                    case 'admin':
                         header('Location: vistas/administrador/administrador.php');
                         break;
                     case 'nutriologo':

@@ -57,7 +57,7 @@ if ($result) {
                 <h1>NutriManager</h1>
                 <nav class="nav">
                     <a href="dashboard.php" class="nav-link">Dashboard</a>
-                    <a href="clientes.php" class="nav-link active">Clientes</a>
+                    <a href="#" class="nav-link active">Clientes</a>
                     <a href="citas.php" class="nav-link">Citas</a>
                     <a href="planes.php" class="nav-link">Planes</a>
                     <a href="../../logout.php" class="nav-link">Cerrar Sesión</a>
