@@ -16,11 +16,11 @@ $filter_type = isset($_GET['filter_type']) ? $_GET['filter_type'] : 'all';
 $where_conditions = [];
 if (!empty($search)) {
     $search_escaped = $conn->real_escape_string($search);
-    $where_conditions[] = "(p.nombre LIKE '%$search_escaped%' OR c.nombre LIKE '%$search_escaped%')";
+    $where_conditions[] = "pa.nombre LIKE '%$search_escaped%'";
 }
 if ($filter_type !== 'all') {
     $filter_escaped = $conn->real_escape_string($filter_type);
-    $where_conditions[] = "p.tipo = '$filter_escaped'";
+    $where_conditions[] = "pa.objetivo = '$filter_escaped'";
 }
 
 $where_clause = '';
@@ -31,21 +31,31 @@ if (!empty($where_conditions)) {
 // Obtener planes
 $planes = [];
 $result = $conn->query("
-    SELECT p.*, c.nombre as cliente_nombre 
+    SELECT p.*, pa.nombre as cliente_nombre 
     FROM planes_nutricionales p 
-    JOIN clientes c ON p.cliente_id = c.id 
+    JOIN pacientes pa ON p.paciente_id = pa.id 
     $where_clause 
-    ORDER BY p.fecha_creacion DESC
+    ORDER BY p.fecha_generacion DESC
 ");
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $planes[] = $row;
     }
 }
+
+// Obtener lista de pacientes
+$pacientes = [];
+$res = $conn->query("SELECT id, nombre FROM pacientes ORDER BY nombre ASC");
+if ($res) {
+    while ($row = $res->fetch_assoc()) {
+        $pacientes[] = $row;
+    }
+}
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -54,12 +64,13 @@ if ($result) {
     <link rel="stylesheet" href="../../css/planes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>NutriManager</h1>
+                <h1>Planes</h1>
                 <nav class="nav">
                     <a href="dashboard.php" class="nav-link">Dashboard</a>
                     <a href="clientes.php" class="nav-link">Clientes</a>
@@ -77,7 +88,7 @@ if ($result) {
                 <div class="header-actions">
                     <button class="btn-secondary" onclick="openModal('generarPlanModal')">
                         <i class="fas fa-magic"></i>
-                        Generar con IA
+                        Generar con el sistema experto
                     </button>
                     <button class="btn-primary" onclick="openModal('planModal')">
                         <i class="fas fa-plus"></i>
@@ -95,15 +106,16 @@ if ($result) {
                     <form method="GET" class="search-form">
                         <div class="search-input-group">
                             <i class="fas fa-search"></i>
-                            <input type="text" name="search" placeholder="Buscar planes o clientes..." 
-                                   value="<?php echo htmlspecialchars($search); ?>">
+                            <input type="text" name="search" placeholder="Buscar planes..."
+                                value="<?php echo htmlspecialchars($search); ?>">
                         </div>
                         <select name="filter_type" class="filter-select">
-                            <option value="all" <?php echo $filter_type === 'all' ? 'selected' : ''; ?>>Todos los tipos</option>
-                            <option value="Pérdida de peso" <?php echo $filter_type === 'Pérdida de peso' ? 'selected' : ''; ?>>Pérdida de peso</option>
-                            <option value="Ganancia muscular" <?php echo $filter_type === 'Ganancia muscular' ? 'selected' : ''; ?>>Ganancia muscular</option>
-                            <option value="Control médico" <?php echo $filter_type === 'Control médico' ? 'selected' : ''; ?>>Control médico</option>
-                            <option value="Mantenimiento" <?php echo $filter_type === 'Mantenimiento' ? 'selected' : ''; ?>>Mantenimiento</option>
+                            <option value="all" <?php echo $filter_type === 'all' ? 'selected' : ''; ?>>Todos los tipos
+                            </option>
+                            <option value="perder_peso" <?php echo $filter_type === 'perder_peso' ? 'selected' : ''; ?>>Pérdida de peso</option>
+                            <option value="ganar_musculo" <?php echo $filter_type === 'ganar_musculo' ? 'selected' : ''; ?>>Ganancia muscular</option>
+                            <option value="control_medico" <?php echo $filter_type === 'control_medico' ? 'selected' : ''; ?>>Control médico</option>
+                            <option value="mantener_peso" <?php echo $filter_type === 'mantener_peso' ? 'selected' : ''; ?>>Mantenimiento</option>
                         </select>
                         <button type="submit" class="btn-search">Buscar</button>
                     </form>
@@ -114,97 +126,111 @@ if ($result) {
             <div class="plans-grid">
                 <?php if (empty($planes)): ?>
                     <div class="no-data">
-                        <i class="fas fa-file-text"></i>
+                        <i class="fas fa-file-alt"></i>
                         <p>No se encontraron planes nutricionales</p>
                     </div>
                 <?php else: ?>
                     <?php foreach ($planes as $plan): ?>
                         <div class="plan-card">
                             <div class="plan-header">
-                                <h3><?php echo htmlspecialchars($plan['nombre']); ?></h3>
-                                <span class="status-badge <?php echo $plan['estado'] === 'activo' ? 'active' : 'inactive'; ?>">
-                                    <?php echo ucfirst($plan['estado']); ?>
+                                <h3>Plan #<?php echo $plan['id']; ?></h3>
+                                <span class="status-badge <?php echo $plan['activo'] ? 'active' : 'inactive'; ?>">
+                                    <?php echo $plan['activo'] ? 'Activo' : 'Inactivo'; ?>
                                 </span>
                             </div>
                             <div class="plan-content">
                                 <div class="plan-info">
                                     <div class="info-row">
                                         <div class="info-item">
-                                            <strong>Cliente:</strong> <?php echo htmlspecialchars($plan['cliente_nombre']); ?>
+                                            <strong>Paciente:</strong> <?php echo htmlspecialchars($plan['cliente_nombre']); ?>
                                         </div>
                                         <div class="info-item">
-                                            <strong>Calorías:</strong> <?php echo $plan['calorias_diarias']; ?> kcal/día
+                                            <strong>Calorías:</strong> <?php echo $plan['calorias_totales']; ?> kcal/día
                                         </div>
                                     </div>
                                     <div class="info-row">
                                         <div class="info-item">
-                                            <strong>Tipo:</strong> <?php echo htmlspecialchars($plan['tipo']); ?>
+                                            <strong>Proteínas:</strong> <?php echo $plan['proteinas_totales']; ?>%
                                         </div>
                                         <div class="info-item">
-                                            <strong>Duración:</strong> <?php echo $plan['duracion_meses']; ?> meses
+                                            <strong>Grasas:</strong> <?php echo $plan['grasas_totales']; ?>%
+                                        </div>
+                                        <div class="info-item">
+                                            <strong>Carbohidratos:</strong> <?php echo $plan['carbohidratos_totales']; ?>%
                                         </div>
                                     </div>
                                     <div class="info-row">
                                         <div class="info-item">
-                                            <strong>Creado:</strong> <?php echo $plan['fecha_creacion']; ?>
+                                            <strong>Creado:</strong> <?php echo $plan['fecha_generacion']; ?>
                                         </div>
-                                        <?php if ($plan['fecha_inicio']): ?>
-                                            <div class="info-item">
-                                                <strong>Inicio:</strong> <?php echo $plan['fecha_inicio']; ?>
-                                            </div>
-                                        <?php endif; ?>
                                     </div>
-                                    <?php if ($plan['descripcion']): ?>
-                                        <div class="plan-description">
-                                            <strong>Descripción:</strong> <?php echo htmlspecialchars($plan['descripcion']); ?>
-                                        </div>
-                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="plan-actions">
-                                <button class="btn-icon" title="Ver detalles" onclick="verPlan(<?php echo $plan['id']; ?>)">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button class="btn-icon" title="Editar" onclick="editarPlan(<?php echo $plan['id']; ?>)">
+                                <button class="btn-icon" title="Editar"
+                                    onclick="editarPlan(this)"
+                                    data-id="<?php echo $plan['id']; ?>"
+                                    data-paciente_id="<?php echo $plan['paciente_id']; ?>"
+                                    data-calorias="<?php echo $plan['calorias_totales']; ?>"
+                                    data-proteinas="<?php echo $plan['proteinas_totales']; ?>"
+                                    data-grasas="<?php echo $plan['grasas_totales']; ?>"
+                                    data-carbos="<?php echo $plan['carbohidratos_totales']; ?>">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn-icon btn-danger" title="Eliminar" onclick="eliminarPlan(<?php echo $plan['id']; ?>)">
+                                <button class="btn-icon btn-danger" title="Eliminar"
+                                    onclick="eliminarPlan(<?php echo $plan['id']; ?>)">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
-            </div>
-
-            <!-- AI Generator Card -->
-            <div class="card ai-generator-card">
-                <div class="card-header">
-                    <h3>
-                        <i class="fas fa-magic"></i>
-                        Generador Automático de Planes
-                    </h3>
-                </div>
-                <div class="card-content">
-                    <p class="ai-description">
-                        Utiliza nuestro motor de inferencia para generar planes nutricionales personalizados basados en:
-                    </p>
-                    <ul class="ai-features">
-                        <li>Objetivos del cliente (pérdida de peso, ganancia muscular, etc.)</li>
-                        <li>Restricciones alimentarias y alergias</li>
-                        <li>Nivel de actividad física</li>
-                        <li>Preferencias alimentarias</li>
-                        <li>Historial médico relevante</li>
-                    </ul>
-                    <button class="btn-ai" onclick="openModal('generarPlanModal')">
-                        <i class="fas fa-magic"></i>
-                        Generar Plan Automático
-                    </button>
-                </div>
-            </div>
         </main>
+    </div>
+    <!-- Modal Nuevo Plan Personalizado -->
+    <div id="planModal" class="modal" style="display:none;">
+      <div class="modal-content" style="max-width: 430px;">
+        <span class="close" onclick="closeModal('planModal')">&times;</span>
+        <h2 style="margin-bottom: 1.5rem;">Nuevo Plan Nutricional Personalizado</h2>
+        <form id="nuevoPlanForm" class="form-plan" method="POST" action="procesar_plan.php" autocomplete="off">
+          <div class="form-group">
+            <label for="paciente_id">Paciente *</label>
+            <select name="paciente_id" id="paciente_id" required>
+              <option value="">Selecciona un paciente</option>
+              <?php foreach ($pacientes as $p): ?>
+                <option value="<?php echo $p['id']; ?>"><?php echo htmlspecialchars($p['nombre']); ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="calorias_diarias">Calorías totales *</label>
+              <input type="number" name="calorias_diarias" id="calorias_diarias" required>
+            </div>
+            <div class="form-group">
+              <label for="porcentaje_proteina">Proteínas (%) *</label>
+              <input type="number" name="porcentaje_proteina" id="porcentaje_proteina" min="0" max="100" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="porcentaje_grasa">Grasas (%) *</label>
+              <input type="number" name="porcentaje_grasa" id="porcentaje_grasa" min="0" max="100" required>
+            </div>
+            <div class="form-group">
+              <label for="porcentaje_carbos">Carbohidratos (%) *</label>
+              <input type="number" name="porcentaje_carbos" id="porcentaje_carbos" min="0" max="100" required>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal('planModal')">Cancelar</button>
+            <button type="submit" class="btn-primary">Guardar Plan</button>
+          </div>
+        </form>
+      </div>
     </div>
 
     <script src="../../js/planes.js"></script>
 </body>
+
 </html>

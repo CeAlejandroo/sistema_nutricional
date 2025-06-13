@@ -83,7 +83,7 @@ if ($result) {
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>NutriManager</h1>
+                <h1>Perfil cliente</h1>
                 <nav class="nav">
                     <a href="dashboard.php" class="nav-link">Dashboard</a>
                     <a href="clientes.php" class="nav-link active">Clientes</a>

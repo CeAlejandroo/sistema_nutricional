@@ -19,7 +19,7 @@ $stats = [
 ];
 
 // Consultar total de clientes
-$result = $conn->query("SELECT COUNT(*) as total FROM clientes WHERE activo = 1");
+$result = $conn->query("SELECT COUNT(*) as total FROM pacientes");
 if ($result) {
     $stats['total_clientes'] = $result->fetch_assoc()['total'];
 }
@@ -32,7 +32,7 @@ if ($result) {
 }
 
 // Consultar planes activos
-$result = $conn->query("SELECT COUNT(*) as total FROM planes_nutricionales WHERE estado = 'activo'");
+$result = $conn->query("SELECT COUNT(*) as total FROM planes_nutricionales WHERE activo = 1");
 if ($result) {
     $stats['planes_activos'] = $result->fetch_assoc()['total'];
 }
@@ -68,7 +68,7 @@ if ($result) {
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>NutriManager</h1>
+                <h1>Nutriologo</h1>
                 <nav class="nav">
                     <a href="dashboard.php" class="nav-link active">Dashboard</a>
                     <a href="clientes.php" class="nav-link">Clientes</a>
@@ -95,7 +95,7 @@ if ($result) {
                     <div class="stat-content">
                         <h3><?php echo $stats['total_clientes']; ?></h3>
                         <p>Total Clientes</p>
-                        <span class="stat-change">+12% desde el mes pasado</span>
+                        <span class="stat-change"></span>
                     </div>
                 </div>
 
@@ -106,7 +106,7 @@ if ($result) {
                     <div class="stat-content">
                         <h3><?php echo $stats['citas_hoy']; ?></h3>
                         <p>Citas Hoy</p>
-                        <span class="stat-change">3 pendientes de confirmar</span>
+                        <span class="stat-change"></span>
                     </div>
                 </div>
 
@@ -117,7 +117,7 @@ if ($result) {
                     <div class="stat-content">
                         <h3><?php echo $stats['planes_activos']; ?></h3>
                         <p>Planes Activos</p>
-                        <span class="stat-change">15 creados esta semana</span>
+                        <span class="stat-change"></span>
                     </div>
                 </div>
 
@@ -128,7 +128,7 @@ if ($result) {
                     <div class="stat-content">
                         <h3>78%</h3>
                         <p>Progreso Promedio</p>
-                        <span class="stat-change">+5% vs mes anterior</span>
+                        <span class="stat-change"></span>
                     </div>
                 </div>
             </div>

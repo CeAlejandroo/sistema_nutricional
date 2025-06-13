@@ -8,39 +8,33 @@ if (!isset($_SESSION['usuario'])) {
 
 require_once '../../includes/conexion.php';
 
+// Establecer zona horaria
+date_default_timezone_set('America/Mexico_City'); // O tu zona horaria local
+
 // Obtener citas
 $fecha_seleccionada = isset($_GET['fecha']) ? $_GET['fecha'] : date('Y-m-d');
 
 // Citas de hoy
-$citas_hoy = [];
-$result = $conn->query("
-    SELECT c.*, cl.nombre as cliente_nombre 
-    FROM citas c 
-    JOIN clientes cl ON c.cliente_id = cl.id 
-    WHERE c.fecha = '$fecha_seleccionada' 
-    ORDER BY c.hora ASC
-");
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $citas_hoy[] = $row;
-    }
-}
+$fecha_hoy = date('Y-m-d');
+$sql_hoy = "SELECT * FROM citas WHERE fecha = ? ORDER BY hora ASC";
+$stmt_hoy = $conn->prepare($sql_hoy);
+$stmt_hoy->bind_param("s", $fecha_hoy);
+$stmt_hoy->execute();
+$result_hoy = $stmt_hoy->get_result();
+$citas_hoy = $result_hoy->fetch_all(MYSQLI_ASSOC);
 
 // Próximas citas
-$proximas_citas = [];
-$result = $conn->query("
-    SELECT c.*, cl.nombre as cliente_nombre 
-    FROM citas c 
-    JOIN clientes cl ON c.cliente_id = cl.id 
-    WHERE c.fecha > '$fecha_seleccionada' 
-    ORDER BY c.fecha ASC, c.hora ASC 
-    LIMIT 10
-");
-if ($result) {
-    while ($row = $result->fetch_assoc()) {
-        $proximas_citas[] = $row;
-    }
-}
+$sql_proximas = "SELECT * FROM citas WHERE fecha > ? ORDER BY fecha ASC, hora ASC";
+$stmt_proximas = $conn->prepare($sql_proximas);
+$stmt_proximas->bind_param("s", $fecha_hoy);
+$stmt_proximas->execute();
+$result_proximas = $stmt_proximas->get_result();
+$proximas_citas = $result_proximas->fetch_all(MYSQLI_ASSOC);
+
+// Todas las citas
+$sql_todas = "SELECT * FROM citas ORDER BY fecha DESC, hora DESC";
+$result_todas = $conn->query($sql_todas);
+$todas_citas = $result_todas->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -48,7 +42,7 @@ if ($result) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Citas - NutriManager</title>
+    <title>Citas - Nutriologo</title>
     <link rel="stylesheet" href="../../css/dashboard.css">
     <link rel="stylesheet" href="../../css/citas.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -58,7 +52,7 @@ if ($result) {
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>NutriManager</h1>
+                <h1>Citas</h1>
                 <nav class="nav">
                     <a href="dashboard.php" class="nav-link">Dashboard</a>
                     <a href="clientes.php" class="nav-link">Clientes</a>
@@ -82,9 +76,9 @@ if ($result) {
             <!-- Tabs -->
             <div class="tabs-container">
                 <div class="tabs-nav">
-                    <button class="tab-btn active" onclick="showTab('hoy')">Hoy</button>
-                    <button class="tab-btn" onclick="showTab('proximas')">Próximas</button>
-                    <button class="tab-btn" onclick="showTab('calendario')">Calendario</button>
+                    <button class="tab-btn active" onclick="showTab('hoy', event)">Hoy</button>
+                    <button class="tab-btn" onclick="showTab('proximas', event)">Próximas</button>
+                    <button class="tab-btn" onclick="showTab('todas', event)">Todas</button>
                 </div>
 
                 <!-- Tab Content: Hoy -->
@@ -130,6 +124,10 @@ if ($result) {
                                                     <button class="btn-icon" title="Editar" onclick="editarCita(<?php echo $cita['id']; ?>)">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
+                                                    <!-- MARCADOR: Hoy -->
+                                                    <button class="btn-icon btn-marker" title="Marcar cita importante" onclick="marcarCita(<?php echo $cita['id']; ?>, this)">
+                                                        <i class="fas fa-star"></i>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -169,6 +167,10 @@ if ($result) {
                                                 <button class="btn-icon" title="Editar" onclick="editarCita(<?php echo $cita['id']; ?>)">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
+                                                <!-- MARCADOR: Próximas -->
+                                                <button class="btn-icon btn-marker" title="Marcar cita importante" onclick="marcarCita(<?php echo $cita['id']; ?>, this)">
+                                                    <i class="fas fa-star"></i>
+                                                </button>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
@@ -178,52 +180,83 @@ if ($result) {
                     </div>
                 </div>
 
-                <!-- Tab Content: Calendario -->
-                <div id="calendario" class="tab-content">
+                <!-- Tab Content: Todas (nueva pestaña) -->
+                <div id="todas" class="tab-content">
                     <div class="card">
                         <div class="card-header">
-                            <h3>Vista de Calendario</h3>
+                            <h3>Todas las Citas</h3>
                         </div>
                         <div class="card-content">
-                            <div class="calendar-container">
-                                <div class="calendar-header">
-                                    <button class="btn-calendar" onclick="previousMonth()">
-                                        <i class="fas fa-chevron-left"></i>
-                                    </button>
-                                    <h4 id="currentMonth">Marzo 2024</h4>
-                                    <button class="btn-calendar" onclick="nextMonth()">
-                                        <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                </div>
-                                <div class="calendar-grid">
-                                    <div class="calendar-day-header">Dom</div>
-                                    <div class="calendar-day-header">Lun</div>
-                                    <div class="calendar-day-header">Mar</div>
-                                    <div class="calendar-day-header">Mié</div>
-                                    <div class="calendar-day-header">Jue</div>
-                                    <div class="calendar-day-header">Vie</div>
-                                    <div class="calendar-day-header">Sáb</div>
-                                    
-                                    <!-- Días del calendario -->
-                                    <?php for ($i = 1; $i <= 31; $i++): ?>
-                                        <div class="calendar-day <?php echo ($i == 15 || $i == 16) ? 'has-appointments' : ''; ?>">
-                                            <span class="day-number"><?php echo $i; ?></span>
-                                            <?php if ($i == 15): ?>
-                                                <div class="appointment-indicator">3 citas</div>
-                                            <?php elseif ($i == 16): ?>
-                                                <div class="appointment-indicator">1 cita</div>
-                                            <?php endif; ?>
+                            <?php if (empty($todas_citas)): ?>
+                                <p class="no-data">No hay citas registradas</p>
+                            <?php else: ?>
+                                <div class="appointments-list">
+                                    <?php foreach ($todas_citas as $cita): ?>
+                                        <div class="appointment-card">
+                                            <div class="appointment-date">
+                                                <div class="date-day"><?php echo date('d', strtotime($cita['fecha'])); ?></div>
+                                                <div class="date-month"><?php echo date('M', strtotime($cita['fecha'])); ?></div>
+                                                <div class="appointment-time"><?php echo $cita['hora']; ?></div>
+                                            </div>
+                                            <div class="appointment-info">
+                                                <h4><?php echo htmlspecialchars($cita['cliente_nombre']); ?></h4>
+                                                <p><?php echo htmlspecialchars($cita['tipo']); ?></p>
+                                                <?php if ($cita['notas']): ?>
+                                                    <p class="appointment-notes"><?php echo htmlspecialchars($cita['notas']); ?></p>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="appointment-actions">
+                                                <span class="status-badge <?php echo $cita['estado'] === 'confirmada' ? 'confirmed' : 'pending'; ?>">
+                                                    <?php echo ucfirst($cita['estado']); ?>
+                                                </span>
+                                                <div class="action-buttons">
+                                                    <?php if ($cita['estado'] === 'programada'): ?>
+                                                        <button class="btn-icon btn-success" title="Confirmar" onclick="confirmarCita(<?php echo $cita['id']; ?>)">
+                                                            <i class="fas fa-check"></i>
+                                                        </button>
+                                                        <button class="btn-icon btn-danger" title="Cancelar" onclick="cancelarCita(<?php echo $cita['id']; ?>)">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    <?php endif; ?>
+                                                    <button class="btn-icon" title="Editar" onclick="editarCita(<?php echo $cita['id']; ?>)">
+                                                        <i class="fas fa-edit"></i>
+                                                    </button>
+                                                    <button class="btn-icon btn-marker" title="Marcar cita importante" onclick="marcarCita(<?php echo $cita['id']; ?>, this)">
+                                                        <i class="fas fa-star"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    <?php endfor; ?>
+                                    <?php endforeach; ?>
                                 </div>
-                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
-    </div>
+    </div> <!-- .container -->
 
+    <!-- Modal fuera del .container, centrado en toda la pantalla -->
+    <div id="citaModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('citaModal')">&times;</span>
+            <h3>Nueva Cita</h3>
+            <form action="procesar_cita.php" method="POST">
+                <label>Cliente:</label>
+                <input type="text" name="cliente" required>
+                <label>Fecha:</label>
+                <input type="date" name="fecha" required>
+                <label>Hora:</label>
+                <input type="time" name="hora" required>
+                <label>Tipo:</label>
+                <input type="text" name="tipo" required>
+                <label>Notas:</label>
+                <textarea name="notas"></textarea>
+                <button type="submit" class="btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
     <script src="../../js/citas.js"></script>
 </body>
 </html>

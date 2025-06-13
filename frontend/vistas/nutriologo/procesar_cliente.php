@@ -9,63 +9,89 @@ if (!isset($_SESSION['usuario'])) {
 require_once '../../includes/conexion.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Procesar nuevo cliente
+    $cliente_id = isset($_POST['cliente_id']) ? intval($_POST['cliente_id']) : 0;
     $nombre = trim($_POST['nombre']);
-    $email = trim($_POST['email']);
-    $telefono = trim($_POST['telefono']);
-    $edad = !empty($_POST['edad']) ? (int)$_POST['edad'] : null;
-    $altura = !empty($_POST['altura']) ? (int)$_POST['altura'] : null;
-    $peso = !empty($_POST['peso']) ? (float)$_POST['peso'] : null;
+    $apellido = trim($_POST['apellido'] ?? '');
+    $edad = !empty($_POST['edad']) ? (int) $_POST['edad'] : null;
+    $genero = trim($_POST['genero'] ?? '');
+    $peso = !empty($_POST['peso']) ? (float) $_POST['peso'] : null;
+    $altura = !empty($_POST['altura']) ? (float) $_POST['altura'] : null;
+    $nivel_actividad = trim($_POST['nivel_actividad'] ?? '');
     $objetivo = trim($_POST['objetivo']);
-    $observaciones = trim($_POST['observaciones']);
-    
+    $restricciones = trim($_POST['observaciones'] ?? '');
+    $enfermedades = trim($_POST['enfermedades'] ?? '');
+    $nutriologo_id = $_SESSION['usuario']['id'];
+
     // Validaciones básicas
-    if (empty($nombre) || empty($email)) {
-        $_SESSION['error'] = "Nombre y email son obligatorios";
+    if (empty($nombre)) {
+        $_SESSION['error'] = "El nombre es obligatorio";
         header('Location: clientes.php');
         exit();
     }
-    
-    // Verificar si el email ya existe
-    $stmt = $conn->prepare("SELECT id FROM clientes WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows > 0) {
-        $_SESSION['error'] = "Ya existe un cliente con ese email";
-        header('Location: clientes.php');
-        exit();
-    }
-    
-    // Insertar nuevo cliente
-    $stmt = $conn->prepare("INSERT INTO clientes (nombre, email, telefono, edad, altura, peso, objetivo, observaciones, activo, fecha_registro) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, NOW())");
-    $stmt->bind_param("sssiidss", $nombre, $email, $telefono, $edad, $altura, $peso, $objetivo, $observaciones);
-    
-    if ($stmt->execute()) {
-        $_SESSION['success'] = "Cliente agregado exitosamente";
+
+    if ($cliente_id > 0) {
+        // Actualizar
+        $stmt = $conn->prepare("UPDATE pacientes SET nombre=?, apellido=?, edad=?, genero=?, peso=?, altura=?, nivel_actividad=?, objetivo=?, restricciones_alimentarias=?, enfermedades=? WHERE id=?");
+        if (!$stmt) {
+            $_SESSION['error'] = "Error en la consulta SQL: " . $conn->error;
+            header('Location: clientes.php');
+            exit();
+        }
+        $stmt->bind_param("ssisdsssssi", $nombre, $apellido, $edad, $genero, $peso, $altura, $nivel_actividad, $objetivo, $restricciones, $enfermedades, $cliente_id);
+        if ($stmt->execute()) {
+            $_SESSION['success'] = "Paciente actualizado exitosamente";
+        } else {
+            $_SESSION['error'] = "Error al actualizar el paciente: " . $conn->error;
+        }
+        $stmt->close();
     } else {
-        $_SESSION['error'] = "Error al agregar el cliente: " . $conn->error;
+        // Insertar nuevo paciente
+        $stmt = $conn->prepare("INSERT INTO pacientes (nombre, apellido, edad, genero, peso, altura, nivel_actividad, objetivo, restricciones_alimentarias, enfermedades, nutriologo_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
+        if ($stmt) {
+            $stmt->bind_param("ssisdsssssi", $nombre, $apellido, $edad, $genero, $peso, $altura, $nivel_actividad, $objetivo, $restricciones, $enfermedades, $nutriologo_id);
+            if ($stmt->execute()) {
+                $_SESSION['success'] = "Paciente agregado exitosamente";
+            } else {
+                $_SESSION['error'] = "Error al agregar el paciente: " . $conn->error;
+            }
+            $stmt->close();
+        } else {
+            $_SESSION['error'] = "Error en la consulta SQL: " . $conn->error;
+        }
     }
-    
+
     header('Location: clientes.php');
     exit();
 }
 
 // Procesar eliminación
 if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
-    $id = (int)$_GET['id'];
-    
-    $stmt = $conn->prepare("UPDATE clientes SET activo = 0 WHERE id = ?");
+    $id = (int) $_GET['id'];
+    $stmt = $conn->prepare("DELETE FROM pacientes WHERE id = ?");
     $stmt->bind_param("i", $id);
-    
+
     if ($stmt->execute()) {
-        $_SESSION['success'] = "Cliente eliminado exitosamente";
+        $_SESSION['success'] = "Paciente eliminado exitosamente";
     } else {
-        $_SESSION['error'] = "Error al eliminar el cliente: " . $conn->error;
+        $_SESSION['error'] = "Error al eliminar el paciente: " . $conn->error;
     }
-    
+    $stmt->close();
     header('Location: clientes.php');
     exit();
 }
 ?>
+<script src="../../js/clientes.js"></script>
+</body>
+</html>
+<?php
+function objetivo_legible($objetivo) {
+    switch ($objetivo) {
+        case 'perder_peso': return 'Pérdida de peso';
+        case 'ganar_musculo': return 'Ganar músculo';
+        case 'mantener_peso': return 'Mantener peso';
+        case 'ganar_peso': return 'Ganar peso';
+        default: return 'No especificado';
+    }
+}
+?>
+<span>Objetivo: <?php echo objetivo_legible($cliente['objetivo'] ?? ''); ?></span>

@@ -27,11 +27,11 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
 $where_clause = '';
 if (!empty($search)) {
     $search_escaped = $conn->real_escape_string($search);
-    $where_clause = "WHERE nombre LIKE '%$search_escaped%' OR email LIKE '%$search_escaped%'";
+    $where_clause = "WHERE nombre LIKE '%$search_escaped%'";
 }
 
 $clientes = [];
-$result = $conn->query("SELECT * FROM clientes $where_clause ORDER BY nombre ASC");
+$result = $conn->query("SELECT * FROM pacientes $where_clause ORDER BY nombre ASC");
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $clientes[] = $row;
@@ -46,7 +46,7 @@ if ($result) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clientes - NutriManager</title>
     <link rel="stylesheet" href="../../css/dashboard.css">
-    <link rel="stylesheet" href="../../css/clientes.css">
+    <link rel="stylesheet" href="../../css/cliente.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -54,7 +54,7 @@ if ($result) {
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <h1>NutriManager</h1>
+                <h1>Clientes</h1>
                 <nav class="nav">
                     <a href="dashboard.php" class="nav-link">Dashboard</a>
                     <a href="#" class="nav-link active">Clientes</a>
@@ -91,7 +91,7 @@ if ($result) {
                     <form method="GET" class="search-form">
                         <div class="search-input-group">
                             <i class="fas fa-search"></i>
-                            <input type="text" name="search" placeholder="Buscar por nombre o email..." 
+                            <input type="text" name="search" placeholder="Buscar por nombre..." 
                                    value="<?php echo htmlspecialchars($search); ?>">
                             <button type="submit" class="btn-search">Buscar</button>
                         </div>
@@ -115,26 +115,49 @@ if ($result) {
                                 </div>
                                 <div class="client-details">
                                     <h3><?php echo htmlspecialchars($cliente['nombre']); ?></h3>
-                                    <p class="client-email"><?php echo htmlspecialchars($cliente['email']); ?></p>
-                                    <p class="client-phone"><?php echo htmlspecialchars($cliente['telefono'] ?? 'No especificado'); ?></p>
+                                    <!-- Solo muestra email y teléfono si existen -->
+                                    <?php if (isset($cliente['email'])): ?>
+                                        <p class="client-email"><?php echo htmlspecialchars($cliente['email']); ?></p>
+                                    <?php endif; ?>
+                                    <?php if (isset($cliente['telefono'])): ?>
+                                        <p class="client-phone"><?php echo htmlspecialchars($cliente['telefono']); ?></p>
+                                    <?php endif; ?>
                                     <div class="client-meta">
-                                        <span>Edad: <?php echo $cliente['edad'] ?? 'N/A'; ?> años</span>
-                                        <span>Objetivo: <?php echo htmlspecialchars($cliente['objetivo'] ?? 'No especificado'); ?></span>
+                                        <span>Edad: <?php echo isset($cliente['edad']) ? $cliente['edad'] : 'N/A'; ?> años</span>
+                                        <span>Objetivo: <?php echo !empty($cliente['objetivo']) ? htmlspecialchars($cliente['objetivo']) : 'No especificado'; ?></span>
                                     </div>
                                 </div>
                             </div>
                             <div class="client-actions">
-                                <span class="status-badge <?php echo $cliente['activo'] ? 'active' : 'inactive'; ?>">
-                                    <?php echo $cliente['activo'] ? 'Activo' : 'Inactivo'; ?>
-                                </span>
+                                <!-- Solo muestra el badge si existe el campo activo -->
+                                <?php if (isset($cliente['activo'])): ?>
+                                    <span class="status-badge <?php echo $cliente['activo'] ? 'active' : 'inactive'; ?>">
+                                        <?php echo $cliente['activo'] ? 'Activo' : 'Inactivo'; ?>
+                                    </span>
+                                <?php endif; ?>
                                 <div class="action-buttons">
-                                    <a href="cliente_perfil.php?id=<?php echo $cliente['id']; ?>" class="btn-icon" title="Ver perfil">
-                                        <i class="fas fa-eye"></i>
                                     </a>
-                                    <button class="btn-icon" title="Editar" onclick="editClient(<?php echo $cliente['id']; ?>)">
+                                    <button 
+                                        class="btn-icon" 
+                                        title="Editar" 
+                                        onclick="editClient(this)"
+                                        data-id="<?php echo $cliente['id']; ?>"
+                                        data-nombre="<?php echo htmlspecialchars($cliente['nombre']); ?>"
+                                        data-email="<?php echo htmlspecialchars($cliente['email'] ?? ''); ?>"
+                                        data-telefono="<?php echo htmlspecialchars($cliente['telefono'] ?? ''); ?>"
+                                        data-edad="<?php echo htmlspecialchars($cliente['edad'] ?? ''); ?>"
+                                        data-altura="<?php echo htmlspecialchars($cliente['altura'] ?? ''); ?>"
+                                        data-peso="<?php echo htmlspecialchars($cliente['peso'] ?? ''); ?>"
+                                        data-objetivo="<?php echo htmlspecialchars($cliente['objetivo'] ?? ''); ?>"
+                                        data-observaciones="<?php echo htmlspecialchars($cliente['restricciones_alimentarias'] ?? ''); ?>"
+                                    >
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn-icon btn-danger" title="Eliminar" onclick="deleteClient(<?php echo $cliente['id']; ?>)">
+                                    <button 
+                                        type="button"
+                                        class="btn-icon btn-danger" 
+                                        title="Eliminar" 
+                                        onclick="deleteClient(<?php echo $cliente['id']; ?>)">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
@@ -159,12 +182,33 @@ if ($result) {
                     <input type="text" id="nombre" name="nombre" required>
                 </div>
                 <div class="form-group">
+                    <label for="apellido">Apellido</label>
+                    <input type="text" id="apellido" name="apellido">
+                </div>
+                <div class="form-group">
                     <label for="email">Email *</label>
                     <input type="email" id="email" name="email" required>
                 </div>
                 <div class="form-group">
                     <label for="telefono">Teléfono</label>
                     <input type="tel" id="telefono" name="telefono">
+                </div>
+                <div class="form-group">
+                    <label for="genero">Género</label>
+                    <select id="genero" name="genero">
+                        <option value="">Seleccionar</option>
+                        <option value="M">Masculino</option>
+                        <option value="F">Femenino</option>
+                        <option value="O">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="nivel_actividad">Nivel de actividad</label>
+                    <input type="text" id="nivel_actividad" name="nivel_actividad">
+                </div>
+                <div class="form-group">
+                    <label for="enfermedades">Enfermedades</label>
+                    <input type="text" id="enfermedades" name="enfermedades">
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -182,16 +226,16 @@ if ($result) {
                 </div>
                 <div class="form-group">
                     <label for="objetivo">Objetivo</label>
-                    <select id="objetivo" name="objetivo">
+                    <select id="objetivo" name="objetivo" required>
                         <option value="">Seleccionar objetivo</option>
-                        <option value="Pérdida de peso">Pérdida de peso</option>
-                        <option value="Ganancia muscular">Ganancia muscular</option>
-                        <option value="Mantenimiento">Mantenimiento</option>
-                        <option value="Control médico">Control médico</option>
+                        <option value="perder_peso">Pérdida de peso</option>
+                        <option value="ganar_musculo">Ganar músculo</option>
+                        <option value="mantener_peso">Mantener peso</option>
+                        <option value="ganar_peso">Ganar peso</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="observaciones">Observaciones</label>
+                    <label for="observaciones">Alergias a algun alimento</label>
                     <textarea id="observaciones" name="observaciones" rows="3"></textarea>
                 </div>
                 <div class="modal-actions">
@@ -205,3 +249,4 @@ if ($result) {
     <script src="../../js/clientes.js"></script>
 </body>
 </html>
+
