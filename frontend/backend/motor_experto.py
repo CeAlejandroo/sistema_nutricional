@@ -5,6 +5,7 @@ import json
 import sys
 import mysql.connector
 from mysql.connector import Error
+import os
 
 def conectar_bd():
     """Conectar a la base de datos MySQL"""
@@ -96,22 +97,25 @@ def generar_plan_nutricional(datos_paciente):
     
     # Ejemplo básico de distribución por comidas
     calorias_por_comida = {
-        'desayuno': calorias_objetivo * 0.25,
-        'almuerzo': calorias_objetivo * 0.35,
-        'cena': calorias_objetivo * 0.30,
-        'snack_1': calorias_objetivo * 0.10
+        'Desayuno': calorias_objetivo * 0.25,
+        'Almuerzo': calorias_objetivo * 0.35,
+        'Cena': calorias_objetivo * 0.30,
+        'Snack': calorias_objetivo * 0.10
     }
     
     for tipo_comida, calorias_comida in calorias_por_comida.items():
+        tipo_normalizado = tipo_comida.lower()
+        if tipo_normalizado.startswith('snack'):
+            tipo_normalizado = 'snack'
         # Seleccionar alimentos para esta comida (lógica simplificada)
         for alimento in alimentos[:3]:  # Ejemplo: tomar primeros 3 alimentos
-            cantidad = (calorias_comida / 3) / alimento['calorias_por_100g'] * 100
+            cantidad = (calorias_comida / 3) / float(alimento['calorias_por_100g']) * 100
             
             comidas.append({
-                'tipo_comida': tipo_comida,
-                'alimento_id': alimento['id'],
-                'cantidad_gramos': round(cantidad, 2),
-                'calorias': round(calorias_comida / 3, 2)
+                "tipo_comida": tipo_normalizado,
+                "alimento_id": alimento['id'],
+                "cantidad_gramos": cantidad,
+                "calorias": calorias_comida
             })
     
     connection.close()
@@ -131,9 +135,18 @@ def main():
         print(json.dumps({'success': False, 'error': 'Faltan argumentos'}))
         return
     
+    tempFile = sys.argv[1]
+    
+    # Verificar si el archivo temporal existe
+    if not os.path.exists(tempFile):
+        with open(os.path.join(os.path.dirname(__file__), 'debug_motor.txt'), 'w', encoding='utf-8') as debug_file:
+            debug_file.write('Archivo temporal no existe: ' + tempFile)
+        print(json.dumps({'success': False, 'error': 'Archivo temporal no existe'}))
+        return
+    
     # Leer datos del archivo temporal
     try:
-        with open(sys.argv[1], 'r') as f:
+        with open(tempFile, 'r', encoding='utf-8') as f:
             datos_paciente = json.load(f)
     except Exception as e:
         print(json.dumps({'success': False, 'error': f'Error leyendo datos: {str(e)}'}))

@@ -32,7 +32,7 @@ if ($result) {
 }
 
 // Consultar planes activos
-$result = $conn->query("SELECT COUNT(*) as total FROM planes_nutricionales WHERE activo = 1");
+$result = $conn->query("SELECT COUNT(*) as total FROM planes_nutricionales");
 if ($result) {
     $stats['planes_activos'] = $result->fetch_assoc()['total'];
 }

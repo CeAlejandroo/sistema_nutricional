@@ -32,7 +32,7 @@ $result_proximas = $stmt_proximas->get_result();
 $proximas_citas = $result_proximas->fetch_all(MYSQLI_ASSOC);
 
 // Todas las citas
-$sql_todas = "SELECT * FROM citas ORDER BY fecha DESC, hora DESC";
+$sql_todas = "SELECT * FROM citas"; // Debe ser así para mostrar todas
 $result_todas = $conn->query($sql_todas);
 $todas_citas = $result_todas->fetch_all(MYSQLI_ASSOC);
 ?>

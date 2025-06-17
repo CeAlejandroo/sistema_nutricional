@@ -86,7 +86,7 @@ if ($res) {
             <div class="page-header">
                 <h2>Planes Nutricionales</h2>
                 <div class="header-actions">
-                    <button class="btn-secondary" onclick="openModal('generarPlanModal')">
+                    <button class="btn-secondary" id="btnGenerarExperto" onclick="abrirGenerarExperto()">
                         <i class="fas fa-magic"></i>
                         Generar con el sistema experto
                     </button>
@@ -114,7 +114,7 @@ if ($res) {
                             </option>
                             <option value="perder_peso" <?php echo $filter_type === 'perder_peso' ? 'selected' : ''; ?>>Pérdida de peso</option>
                             <option value="ganar_musculo" <?php echo $filter_type === 'ganar_musculo' ? 'selected' : ''; ?>>Ganancia muscular</option>
-                            <option value="control_medico" <?php echo $filter_type === 'control_medico' ? 'selected' : ''; ?>>Control médico</option>
+                            <option value="ganar_peso" <?php echo $filter_type === 'ganar_peso' ? 'selected' : ''; ?>>Ganar peso</option>
                             <option value="mantener_peso" <?php echo $filter_type === 'mantener_peso' ? 'selected' : ''; ?>>Mantenimiento</option>
                         </select>
                         <button type="submit" class="btn-search">Buscar</button>
@@ -181,6 +181,11 @@ if ($res) {
                                     onclick="eliminarPlan(<?php echo $plan['id']; ?>)">
                                     <i class="fas fa-trash"></i>
                                 </button>
+                                <button class="btn-icon" title="Ver plan" onclick="verPlan(<?php echo $plan['id']; ?>)">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-1.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+  </svg>
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -189,7 +194,7 @@ if ($res) {
     </div>
     <!-- Modal Nuevo Plan Personalizado -->
     <div id="planModal" class="modal" style="display:none;">
-      <div class="modal-content" style="max-width: 430px;">
+      <div class="modal-content">
         <span class="close" onclick="closeModal('planModal')">&times;</span>
         <h2 style="margin-bottom: 1.5rem;">Nuevo Plan Nutricional Personalizado</h2>
         <form id="nuevoPlanForm" class="form-plan" method="POST" action="procesar_plan.php" autocomplete="off">
@@ -230,7 +235,52 @@ if ($res) {
       </div>
     </div>
 
+    <!-- Modal para seleccionar paciente y generar plan experto -->
+    <div id="expertoModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('expertoModal')">&times;</span>
+        <h2>Selecciona un paciente</h2>
+        <form id="formExperto" onsubmit="return generarPlanExperto(event)">
+          <div class="form-group">
+            <label for="paciente_experto">Paciente *</label>
+            <select id="paciente_experto" required>
+              <option value="">Selecciona un paciente</option>
+              <?php foreach ($pacientes as $p): ?>
+                <option value="<?php echo $p['id']; ?>"><?php echo htmlspecialchars($p['nombre']); ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <!-- AQUÍ va el resumen, dentro del modal-content -->
+          <div id="resumen_experto" style="display:none; margin:1em 0; background:#f8fafc; border-radius:8px; padding:1em; color:#222;">
+            <!-- Resumen generado por JS -->
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal('expertoModal')">Cancelar</button>
+            <button type="submit" class="btn-primary">Generar Plan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal para ver plan -->
+    <div id="verPlanModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal('verPlanModal')">&times;</span>
+        <div id="contenido_ver_plan"></div>
+      </div>
+    </div>
+
     <script src="../../js/planes.js"></script>
+    <script>
+      const alimentosPorId = {
+        <?php
+          $resAlim = $conn->query("SELECT id, nombre FROM alimentos");
+          while ($row = $resAlim->fetch_assoc()) {
+            echo $row['id'] . ': "' . addslashes($row['nombre']) . '",';
+          }
+        ?>
+      };
+    </script>
 </body>
 
 </html>

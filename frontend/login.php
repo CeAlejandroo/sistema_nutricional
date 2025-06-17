@@ -11,8 +11,6 @@ if (isset($_SESSION['usuario'])) {
         case 'nutriologo':
             header('Location: vistas/nutriologo/clientes.php');
             break;
-        default:
-            header('Location: vistas/cliente/cliente.php');
     }
     exit();
 }
@@ -60,8 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     case 'nutriologo':
                         header('Location: vistas/nutriologo/clientes.php');
                         break;
-                    default:
-                        header('Location: vistas/cliente/clientes.php');
                 }
                 exit();
             } else {

@@ -3,7 +3,7 @@
 .header-actions {
   display: flex;
   gap: 0.75rem;
-  margin-left: auto; /* Esto alinea los botones a la derecha */
+  margin-left: auto;
 }
 
 .btn-primary {
@@ -89,7 +89,6 @@
   background: #047857;
 }
 
-/* Contenedor principal */
 .plans-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -97,7 +96,6 @@
     margin-top: 2rem;
 }
 
-/* Tarjeta de plan y card general */
 .plan-card,
 .card {
     background: #fff;
@@ -122,7 +120,6 @@
     box-shadow: 0 4px 16px rgba(0,0,0,0.10);
 }
 
-/* Encabezado de la tarjeta */
 .plan-header {
     display: flex;
     justify-content: space-between;
@@ -156,7 +153,6 @@
     color: #e74c3c;
 }
 
-/* Contenido del plan */
 .plan-content {
     flex: 1;
 }
@@ -185,7 +181,6 @@
     padding: 0.5em 0.8em;
 }
 
-/* Acciones */
 .plan-actions {
     display: flex;
     gap: 0.5rem;
@@ -218,7 +213,6 @@
     color: #c0392b;
 }
 
-/* No data */
 .no-data {
     text-align: center;
     color: #888;
@@ -232,7 +226,6 @@
     color: #e0e0e0;
 }
 
-/* Encabezado de página */
 .page-header {
   display: flex;
   align-items: center;
@@ -242,17 +235,32 @@
 
 /* Modal básico */
 .modal {
-  position: fixed; z-index: 1000; left: 0; top: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
 }
+
 .modal-content {
-  background: #fff; padding: 2rem; border-radius: 1rem; width: 100%; max-width: 500px; position: relative;
+    background-color: #fff;
+    margin: 60px auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    position: relative;
 }
+
 .close {
   position: absolute; right: 1rem; top: 1rem; font-size: 2rem; cursor: pointer;
 }
 
-/* Mejorar aspecto del formulario modal de plan */
 .form-plan {
   display: flex;
   flex-direction: column;
@@ -305,20 +313,15 @@
   .header-actions {
     flex-direction: column;
   }
-
   .search-form {
     flex-direction: column;
   }
-
   .filter-select {
     min-width: auto;
   }
-
   .info-row {
-    grid-template-columns: 1fr;
     gap: 0.5rem;
   }
-
   .plan-actions {
     justify-content: center;
   }
